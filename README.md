@@ -30,6 +30,35 @@ conda activate id_video_eval
 pip install -r requirements.txt
 ```
 
+### 1.3 Create environment-2
+
+```bash
+conda create -n opens2v python=3.12.0 -y
+conda activate opens2v
+
+- cuda 11.8
+pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu118
+pip install --no-cache-dir --default-timeout=120 --retries 10 \
+  flashinfer-python==0.2.2.post1 \
+  -i https://flashinfer.ai/whl/cu118/torch2.6
+- cuda 12.4
+pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+pip install --no-cache-dir --default-timeout=120 --retries 10 \
+  flashinfer-python==0.2.2.post1 \
+  -i https://flashinfer.ai/whl/cu124/torch2.6
+```
+
+### 1.4 Install dependencies-2
+
+```bash
+pip install -r requirements_opens2v.txt
+
+cd CLIP
+python -m pip install .
+
+pip install flash-attn --no-build-isolation
+```
+
 ---
 
 ## 2. Download Model Weights from Hugging Face

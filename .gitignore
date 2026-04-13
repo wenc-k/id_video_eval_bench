@@ -3,3 +3,10 @@ clip/
 dino-vits16/
 raft_model/
 ip/
+refalign_eval/
+phantom_eval/
+phantom_generated_videos/
+refalign_generated_videos/
+Stand-In_WAN2.2/
+ckpt/
+summary_from_prompt1.py
