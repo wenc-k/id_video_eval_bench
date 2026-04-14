@@ -62,19 +62,25 @@ pip install flash-attn --no-build-isolation
 
 ### Prepare Environment for Q-Align
 - Create conda environment
+```bash
 conda create -n opens2v_qalign python=3.10
 conda activate opens2v_qalign
+```
 
 - Install PyTorch and other dependencies
+```bash
 pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121 # or cu118
 #ensure your cuda version is 11.8 or 12.1, and ensure the gcc in a high version (we use 11.2)
 pip install flash-attn --no-build-isolation
+```
 
 - Install main dependencies
+```bash
 cd eval_opens2v/utils/Q-Align
 pip install -e .
 
 python -m pip install "protobuf>=4,<6" sentencepiece
+```
 
 ---
 
@@ -225,16 +231,4 @@ The final total score is computed using the **Human-Domain** weighting scheme, w
 | Motion Amplitude  | `motion_fb`                           |   0.03 |
 | Face Similarity   | `cur_score`                           |   0.25 |
 | Text Consistency  | `gme_score`                           |   0.15 |
-| Natural Score     | `naturalscore` / `naturalscore_1`     |   0.30 |
-
----
-
-## 7. Minimal Usage Order
-
-```bash
-conda activate opens2v
-bash eval_stage1.sh
-
-conda activate opens2v_qalign
-bash eval_stage2.sh
-```
+| Natural Score     | `naturalscore`                        |   0.30 |
