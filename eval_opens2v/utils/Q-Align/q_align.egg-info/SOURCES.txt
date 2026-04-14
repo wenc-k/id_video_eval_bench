@@ -1,5 +1,3 @@
-LICENSE
-README.md
 pyproject.toml
 q_align/__init__.py
 q_align/constants.py

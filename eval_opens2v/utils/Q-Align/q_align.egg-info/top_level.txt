@@ -1,4 +1,1 @@
-fig
-lora_finetune
-model_zoo
 q_align

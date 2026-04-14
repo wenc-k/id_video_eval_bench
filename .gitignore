@@ -10,3 +10,9 @@ refalign_generated_videos/
 Stand-In_WAN2.2/
 ckpt/
 summary_from_prompt1.py
+CLIP/
+vip200k_test_track_Facial/
+
+eval_opens2v/metric_phantom_v2
+eval_opens2v/metric_refalign_v2
+eval_opens2v/phantom_results_done

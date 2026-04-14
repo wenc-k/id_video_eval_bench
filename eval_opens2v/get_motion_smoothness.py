@@ -178,7 +178,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-    device = "cuda:0"
+    device = "cuda"
 
     input_video_folder = args.input_video_folder
     output_json_folder = args.output_json_folder

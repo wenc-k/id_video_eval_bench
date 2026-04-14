@@ -337,10 +337,10 @@ def build_parser():
     p.add_argument("--gme_num_frames", type=int, default=32)
     p.add_argument("--motion_num_workers", type=int, default=32)
 
-    p.add_argument("--skip_naturalscore", default=False)
+    p.add_argument("--skip_naturalscore", action="store_true")
     p.add_argument("--api_key", type=str, default=None)
-    p.add_argument("--base_url", type=str, default=None)
-    p.add_argument("--natural_model_name", type=str, default="gpt-4o-2024-11-20")
+    p.add_argument("--base_url", type=str, default='https://api.zhizengzeng.com/v1')
+    p.add_argument("--natural_model_name", type=str, default="gpt-5.4")
     p.add_argument("--natural_num_workers", type=int, default=32)
     return p
 

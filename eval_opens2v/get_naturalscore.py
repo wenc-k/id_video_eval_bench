@@ -187,7 +187,7 @@ def main():
 
     os.makedirs(output_json_folder, exist_ok=True)
 
-    for i in [1, 2, 3]:
+    for i in [1]:
         output_json_file = os.path.join(output_json_folder, f"naturalscore_{i}.json")
         if not os.path.exists(output_json_file):
             process_folder(
