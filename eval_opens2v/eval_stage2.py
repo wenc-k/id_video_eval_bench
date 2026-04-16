@@ -65,65 +65,6 @@ def make_case_key(idx: int, case: Dict[str, Any]) -> str:
     stem = re.sub(r"[^A-Za-z0-9._-]+", "_", stem)
     return f"case_{idx:04d}_{stem}"
 
-
-def normalize_human_domain_case(case: Dict[str, Any]) -> Dict[str, Optional[float]]:
-    aes = safe_float(case.get("aes_score"))
-    motion_smoothness = safe_float(case.get("motion_smoothness"))
-    motion_amplitude = safe_float(case.get("motion_fb"))
-    facesim_cur = safe_float(case.get("cur_score"))
-    gme_score = safe_float(case.get("gme_score"))
-
-    natural_score = safe_float(case.get("natural_score"))
-    if natural_score is None:
-        natural_score = safe_float(case.get("naturalscore"))
-    if natural_score is None:
-        natural_score = mean_valid([safe_float(case.get(f"naturalscore_{i}")) for i in (1, 2, 3)])
-
-    if aes is not None:
-        aes = max(min(aes, 7.0), 4.0)
-        aes = (aes - 4.0) / 3.0
-    if motion_smoothness is not None:
-        motion_smoothness = min(abs(motion_smoothness), 1.0)
-    if motion_amplitude is not None:
-        motion_amplitude = min(abs(motion_amplitude), 1.0)
-    if facesim_cur is not None:
-        facesim_cur = min(facesim_cur, 1.0)
-    if gme_score is not None:
-        gme_score = min(gme_score, 1.0)
-    if natural_score is not None:
-        natural_score = max(min(natural_score, 5.0), 1.0)
-        natural_score = (natural_score - 1.0) / 4.0
-
-    return {
-        "aes_score_norm": aes,
-        "motion_smoothness_norm": motion_smoothness,
-        "motion_amplitude_norm": motion_amplitude,
-        "facesim_cur_norm": facesim_cur,
-        "gme_score_norm": gme_score,
-        "natural_score_norm": natural_score,
-    }
-
-
-def human_domain_total_from_norm(norm: Dict[str, Optional[float]]) -> Optional[float]:
-    keys = [
-        "aes_score_norm",
-        "motion_smoothness_norm",
-        "motion_amplitude_norm",
-        "facesim_cur_norm",
-        "gme_score_norm",
-        "natural_score_norm",
-    ]
-    if any(norm.get(k) is None for k in keys):
-        return None
-    return (
-        0.18 * norm["aes_score_norm"]
-        + 0.09 * norm["motion_smoothness_norm"]
-        + 0.03 * norm["motion_amplitude_norm"]
-        + 0.25 * norm["facesim_cur_norm"]
-        + 0.15 * norm["gme_score_norm"]
-        + 0.30 * norm["natural_score_norm"]
-    )
-
 def process_scores_official_from_cases(case_results: List[Dict[str, Any]]) -> Dict[str, float]:
     total_aes_score = 0.0
     total_motion_amplitude = 0.0
