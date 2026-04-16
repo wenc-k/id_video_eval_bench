@@ -51,6 +51,15 @@ def safe_float(x):
         return None
 
 
+def extract_natural_score(case: Dict[str, Any]) -> Optional[float]:
+    val = safe_float(case.get("natural_score"))
+    if val is None:
+        val = safe_float(case.get("naturalscore"))
+    if val is None:
+        val = mean_valid([safe_float(case.get(f"naturalscore_{i}")) for i in (1, 2, 3)])
+    return val
+
+
 def make_case_key(idx: int, case: Dict[str, Any]) -> str:
     stem = Path(case["video_path"]).stem
     stem = re.sub(r"[^A-Za-z0-9._-]+", "_", stem)
@@ -115,6 +124,103 @@ def human_domain_total_from_norm(norm: Dict[str, Optional[float]]) -> Optional[f
         + 0.30 * norm["natural_score_norm"]
     )
 
+def process_scores_official_from_cases(case_results: List[Dict[str, Any]]) -> Dict[str, float]:
+    total_aes_score = 0.0
+    total_motion_amplitude = 0.0
+    total_motion_smoothness = 0.0
+    total_facesim_cur = 0.0
+    total_gme_score = 0.0
+    total_natural_score = 0.0
+
+    count_aes_score = 0
+    count_motion_amplitude = 0
+    count_motion_smoothness = 0
+    count_facesim_cur = 0
+    count_gme_score = 0
+    count_natural_score = 0
+
+    min_aes_score = 4.0
+    max_aes_score = 7.0
+    min_motion_amplitude = 0.0
+    max_motion_amplitude = 1.0
+    min_motion_smoothness = 0.0
+    max_motion_smoothness = 1.0
+    min_facesim_cur = 0.0
+    max_facesim_cur = 1.0
+    min_gme_score = 0.0
+    max_gme_score = 1.0
+    min_natural_score = 1.0
+    max_natural_score = 5.0
+
+    for case in case_results:
+        aes_score = safe_float(case.get("aes_score"))
+        if aes_score is not None:
+            aes_score = max(min(aes_score, max_aes_score), min_aes_score)
+            total_aes_score += aes_score
+            count_aes_score += 1
+
+        motion_amplitude = safe_float(case.get("motion_fb"))
+        if motion_amplitude is not None:
+            motion_amplitude = min(abs(motion_amplitude), max_motion_amplitude)
+            total_motion_amplitude += motion_amplitude
+            count_motion_amplitude += 1
+
+        motion_smoothness = safe_float(case.get("motion_smoothness"))
+        if motion_smoothness is not None:
+            motion_smoothness = min(abs(motion_smoothness), max_motion_smoothness)
+            total_motion_smoothness += motion_smoothness
+            count_motion_smoothness += 1
+
+        facesim_cur = safe_float(case.get("cur_score"))
+        if facesim_cur is not None:
+            facesim_cur = min(facesim_cur, max_facesim_cur)
+            total_facesim_cur += facesim_cur
+            count_facesim_cur += 1
+
+        gme_score = safe_float(case.get("gme_score"))
+        if gme_score is not None:
+            gme_score = min(gme_score, max_gme_score)
+            total_gme_score += gme_score
+            count_gme_score += 1
+
+        natural_score = extract_natural_score(case)
+        if natural_score is not None:
+            natural_score = max(min(natural_score, max_natural_score), min_natural_score)
+            total_natural_score += natural_score
+            count_natural_score += 1
+
+    avg_aes_score = total_aes_score / count_aes_score if count_aes_score else 0.0
+    avg_motion_amplitude = total_motion_amplitude / count_motion_amplitude if count_motion_amplitude else 0.0
+    avg_motion_smoothness = total_motion_smoothness / count_motion_smoothness if count_motion_smoothness else 0.0
+    avg_facesim_cur = total_facesim_cur / count_facesim_cur if count_facesim_cur else 0.0
+    avg_gme_score = total_gme_score / count_gme_score if count_gme_score else 0.0
+    avg_natural_score = total_natural_score / count_natural_score if count_natural_score else 0.0
+
+    aes_score_norm = (avg_aes_score - min_aes_score) / (max_aes_score - min_aes_score)
+    motion_amplitude_norm = (avg_motion_amplitude - min_motion_amplitude) / (max_motion_amplitude - min_motion_amplitude)
+    motion_smoothness_norm = (avg_motion_smoothness - min_motion_smoothness) / (max_motion_smoothness - min_motion_smoothness)
+    facesim_cur_norm = (avg_facesim_cur - min_facesim_cur) / (max_facesim_cur - min_facesim_cur)
+    gme_score_norm = (avg_gme_score - min_gme_score) / (max_gme_score - min_gme_score)
+    natural_score_norm = (avg_natural_score - min_natural_score) / (max_natural_score - min_natural_score)
+
+    total_score = (
+        0.18 * aes_score_norm
+        + 0.09 * motion_smoothness_norm
+        + 0.03 * motion_amplitude_norm
+        + 0.25 * facesim_cur_norm
+        + 0.15 * gme_score_norm
+        + 0.30 * natural_score_norm
+    )
+
+    return {
+        "aes_score": aes_score_norm,
+        "motion_smoothness": motion_smoothness_norm,
+        "motion_amplitude": motion_amplitude_norm,
+        "facesim_cur": facesim_cur_norm,
+        "gme_score": gme_score_norm,
+        "natural_score": natural_score_norm,
+        "total_score": total_score,
+    }
 
 def aggregate_by_id(case_results: List[Dict[str, Any]]) -> Dict[str, Any]:
     grouped = defaultdict(list)
@@ -123,54 +229,43 @@ def aggregate_by_id(case_results: List[Dict[str, Any]]) -> Dict[str, Any]:
 
     out = {}
     for id_key, cases in sorted(grouped.items(), key=lambda x: str(x[0])):
-        natural_vals = []
-        for c in cases:
-            val = safe_float(c.get("natural_score"))
-            if val is None:
-                val = safe_float(c.get("naturalscore"))
-            if val is None:
-                val = mean_valid([safe_float(c.get(f"naturalscore_{i}")) for i in (1, 2, 3)])
-            natural_vals.append(val)
+        natural_vals = [extract_natural_score(c) for c in cases]
 
         row = {
             "id_index": id_key,
             "num_cases": len(cases),
             "ref_img_path": sorted({c.get("ref_img_path", "") for c in cases}),
-            "aes_score": mean_valid([safe_float(c.get("aes_score")) for c in cases]),
-            "motion_smoothness": mean_valid([safe_float(c.get("motion_smoothness")) for c in cases]),
-            "motion_fb": mean_valid([safe_float(c.get("motion_fb")) for c in cases]),
-            "cur_score": mean_valid([safe_float(c.get("cur_score")) for c in cases]),
-            "arc_score": mean_valid([safe_float(c.get("arc_score")) for c in cases]),
-            "gme_score": mean_valid([safe_float(c.get("gme_score")) for c in cases]),
-            "natural_score": mean_valid(natural_vals),
+            "aes_score_raw_avg": mean_valid([safe_float(c.get("aes_score")) for c in cases]),
+            "motion_smoothness_raw_avg": mean_valid([safe_float(c.get("motion_smoothness")) for c in cases]),
+            "motion_fb_raw_avg": mean_valid([safe_float(c.get("motion_fb")) for c in cases]),
+            "cur_score_raw_avg": mean_valid([safe_float(c.get("cur_score")) for c in cases]),
+            "arc_score_raw_avg": mean_valid([safe_float(c.get("arc_score")) for c in cases]),
+            "gme_score_raw_avg": mean_valid([safe_float(c.get("gme_score")) for c in cases]),
+            "natural_score_raw_avg": mean_valid(natural_vals),
         }
-        norm = normalize_human_domain_case(row)
-        row.update(norm)
-        row["total_score"] = human_domain_total_from_norm(norm)
+
+        official_merge = process_scores_official_from_cases(cases)
+        row.update(official_merge)
+
         out[id_key] = row
     return out
 
 
 def aggregate_summary(case_results: List[Dict[str, Any]], id_results: Dict[str, Any]) -> Dict[str, Any]:
-    natural_vals = []
-    for c in case_results:
-        val = safe_float(c.get("natural_score"))
-        if val is None:
-            val = safe_float(c.get("naturalscore"))
-        if val is None:
-            val = mean_valid([safe_float(c.get(f"naturalscore_{i}")) for i in (1, 2, 3)])
-        natural_vals.append(val)
+    natural_vals = [extract_natural_score(c) for c in case_results]
 
     avg_case = {
-        "aes_score": mean_valid([safe_float(c.get("aes_score")) for c in case_results]),
-        "motion_smoothness": mean_valid([safe_float(c.get("motion_smoothness")) for c in case_results]),
-        "motion_fb": mean_valid([safe_float(c.get("motion_fb")) for c in case_results]),
-        "cur_score": mean_valid([safe_float(c.get("cur_score")) for c in case_results]),
-        "arc_score": mean_valid([safe_float(c.get("arc_score")) for c in case_results]),
-        "gme_score": mean_valid([safe_float(c.get("gme_score")) for c in case_results]),
-        "natural_score": mean_valid(natural_vals),
+        "aes_score_raw_avg": mean_valid([safe_float(c.get("aes_score")) for c in case_results]),
+        "motion_smoothness_raw_avg": mean_valid([safe_float(c.get("motion_smoothness")) for c in case_results]),
+        "motion_fb_raw_avg": mean_valid([safe_float(c.get("motion_fb")) for c in case_results]),
+        "cur_score_raw_avg": mean_valid([safe_float(c.get("cur_score")) for c in case_results]),
+        "arc_score_raw_avg": mean_valid([safe_float(c.get("arc_score")) for c in case_results]),
+        "gme_score_raw_avg": mean_valid([safe_float(c.get("gme_score")) for c in case_results]),
+        "natural_score_raw_avg": mean_valid(natural_vals),
     }
-    norm = normalize_human_domain_case(avg_case)
+
+    official_merge = process_scores_official_from_cases(case_results)
+
     return {
         "num_cases": len(case_results),
         "num_ids": len(id_results),
@@ -183,8 +278,15 @@ def aggregate_summary(case_results: List[Dict[str, Any]], id_results: Dict[str, 
             "natural_score": 0.30,
         },
         "case_average_raw": avg_case,
-        "case_average_norm": norm,
-        "total_score": human_domain_total_from_norm(norm),
+        "case_average_norm": {
+            "aes_score_norm": official_merge["aes_score"],
+            "motion_smoothness_norm": official_merge["motion_smoothness"],
+            "motion_amplitude_norm": official_merge["motion_amplitude"],
+            "facesim_cur_norm": official_merge["facesim_cur"],
+            "gme_score_norm": official_merge["gme_score"],
+            "natural_score_norm": official_merge["natural_score"],
+        },
+        "total_score": official_merge["total_score"],
     }
 
 
@@ -270,9 +372,6 @@ class MotionSmoothnessMerger:
             ms_row = ms_map.get(m["case_key"], {})
             if isinstance(ms_row, dict):
                 row.update(ms_row)
-            norm = normalize_human_domain_case(row)
-            row.update(norm)
-            row["total_score"] = human_domain_total_from_norm(norm)
             merged_cases.append(row)
 
         id_results = aggregate_by_id(merged_cases)
