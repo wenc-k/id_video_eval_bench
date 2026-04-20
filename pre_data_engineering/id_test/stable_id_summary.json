@@ -1,0 +1,41 @@
+{
+  "stable_id_summary": {
+    "compact_summary": "Masculine-presenting middle-aged adult with short brown hair, no glasses, and a broad face.",
+    "safe_injection_attributes": {
+      "gender_presentation": "masculine-presenting",
+      "age_impression": "middle-aged adult",
+      "hair_color": "brown",
+      "hair_style": "short, side-parted hair",
+      "facial_hair": "none",
+      "glasses": "no",
+      "other_high_confidence_facial_traits": [
+        "broad face",
+        "thick eyebrows"
+      ]
+    },
+    "do_not_inject_attributes": [
+      {
+        "attribute": "eye color",
+        "reason": "unclear"
+      },
+      {
+        "attribute": "jawline shape",
+        "reason": "weak"
+      },
+      {
+        "attribute": "skin tone",
+        "reason": "weak"
+      },
+      {
+        "attribute": "exact nose shape",
+        "reason": "weak"
+      }
+    ]
+  },
+  "reference_image_assessment": {
+    "frontality": "near-frontal",
+    "face_visibility": "clear",
+    "image_quality": "medium",
+    "identity_summary_reliability": "high"
+  }
+}
