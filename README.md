@@ -15,6 +15,26 @@ The evaluation script reads a JSON file of test cases and produces three output 
 
 ---
 
+## pre_data_engineering
+## Prompt Engineering
+
+We use a lightweight two-stage prompt engineering pipeline to improve identity consistency while preserving the original text intent.
+
+1. **Reference ID summarization**  
+   We first extract a minimal stable identity summary from the reference face image, focusing only on a few high-value anchors such as **gender** and at most one or two salient facial traits.
+
+2. **Prompt adaptation**  
+   We then adapt the raw prompt conditioned on the reference identity summary. The adaptation is designed to be conservative and only applies minimal necessary edits. Its main goals are:
+   - reduce **gender drift**
+   - improve **face visibility** (e.g. avoid back-view / tiny-face / non-frontal failure modes)
+   - stay conservative for **hard occlusion** cases such as helmets, masks, or oxygen gear
+   - preserve the original subject, action, and scene as much as possible
+
+3. **Usage.** 
+    Place `image.png` and one or more prompt `.txt` files in the same case directory, then run the pipeline on that directory. The script will generate a processed prompt for each `.txt` file and save the outputs back to the same directory.
+
+---
+
 ## 1. Environment Installation
 
 ### 1.1 Create environment
